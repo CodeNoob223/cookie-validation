@@ -17,5 +17,11 @@ const userData = new Schema({
   } 
 });
 
+userData.virtual("id").get(function() {
+  return this._id.toHexString();
+});
+
+userData.set("toJSON", {virtuals: true});
+
 //create collection with a specific schema
 module.exports = mongoose.model("User", userData);

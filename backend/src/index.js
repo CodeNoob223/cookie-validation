@@ -76,8 +76,6 @@ app.use(express.static(publicPath));
 
 //Routers
 app.get('', (req, res) => {
-  res.cookie("user", "123123");
-  res.cookie("sky", "blue");
   return res.render("index", {
     title: "Welcome"
   })
@@ -87,7 +85,6 @@ app.post("/logout", (req, res) => {
   if (req.session) {
     req.session.destroy((err) => {
       if (err) return res.send({error: err});
-      return res.redirect("/");
     });
   }
   return res.redirect("/");
@@ -95,7 +92,8 @@ app.post("/logout", (req, res) => {
 
 app.get("/dashboard", isAuth, (req, res) => {
   res.render("dashboard", {
-    title: "Secret page"
+    title: "Secret page",
+    user: req.session.user
   });
 });
 

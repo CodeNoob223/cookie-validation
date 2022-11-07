@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const User = require("../models/userSchema");
+const UserModel = require("../models/userSchema");
 const validator = require("validator");
 const bcrypt  = require("bcrypt");
 
@@ -15,12 +15,13 @@ router.post("/", async (req, res) => {
     return res.json({error: "Please input an valid email!"});
   }
   //check if user exist
-  const user = await User.findOne({email: email});
+  const user = await UserModel.findOne({email: email});
   if (user) {
     const validPassword = await bcrypt.compare(password, user.password);
     if (validPassword) {
       req.session.isAuth = true;
-      return res.json({message: "Logged in!"});
+      req.session.user = "Quan";
+      return res.redirect("/dashboard");
     } else {
       return res.json({error: "Incorrect password!"});
     }
