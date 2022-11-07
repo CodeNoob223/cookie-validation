@@ -8,7 +8,8 @@ const userData = new Schema({
   },
   email: {
     type: String,
-    require: true
+    require: true,
+    unique: true
   },
   password: {
     type: String,
@@ -17,6 +18,4 @@ const userData = new Schema({
 });
 
 //create collection with a specific schema
-module.exports = {
-  UserSchema: mongoose.model("User", userData)
-};
+module.exports = mongoose.model("User", userData);

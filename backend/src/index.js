@@ -9,42 +9,12 @@ const morgan = require("morgan"); //Xem http request tu browser
 const mongoose = require("mongoose");
 const MongoDBSession = require('connect-mongodb-session')(session);
 const hbs = require("hbs");
+const isAuth = require("../middleware/isAuth");
 
-// Tao path cho Express config
-const publicPath = path.join(__dirname, "../public");
-const viewsPath = path.join(__dirname, "../templates/views");
-const partialsPath = path.join(__dirname, "../templates/partials");
-
-// Handlebars
-app.set('view engine', 'hbs');
-app.set('views', viewsPath);
-hbs.registerPartials(partialsPath);
-
-app.set('view engine', 'hbs');
-app.set('views', viewsPath);
-hbs.registerPartials(partialsPath);
-
-// Setup directory
-app.use(express.static(publicPath));
-
-
-app.get('', (req, res) => {
-  res.render("index", {
-    title: "Welcome"
-  })
-})
-
-app.get('/login', (req, res) => {
-  res.render("login",{
-      title: "Login"
-  });
-});
-
-app.get('/register', (req, res) => {
-  res.render("register", {
-    title: "Register"
-  })
-})
+//Middleware
+app.use(morgan("tiny"));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 
 //mongodb
 const secretKey = process.env.SECRET;
@@ -52,11 +22,8 @@ const mongodbURI = process.env.URI;
 
 //Cross origin resource sharing
 const cors = require("cors");
+const login = require("../routers/login");
 app.use(cors({origin: "*"}));
-
-//Middleware
-app.use(morgan("tiny"));
-app.use(bodyParser.json());
 
 //connect to database
 mongoose.connect(mongodbURI, {
@@ -73,7 +40,13 @@ mongoose.connect(mongodbURI, {
 const storage = new MongoDBSession({
   uri: mongodbURI,
   databaseName: "userdata",
-  collection: "mySessions"
+  collection: "mySessions",
+  cookie: {
+    path: '/', 
+    httpOnly: true, 
+    secure: false, 
+    maxAge: 100000 
+  }
 });
 app.use(
   session({
@@ -83,6 +56,54 @@ app.use(
     store: storage
   })
 );
+
+// Tao path cho Express config
+const publicPath = path.join(__dirname, "../public");
+const viewsPath = path.join(__dirname, "../templates/views");
+const partialsPath = path.join(__dirname, "../templates/partials");
+
+// Handlebars
+app.set('view engine', 'hbs');
+app.set('views', viewsPath);
+hbs.registerPartials(partialsPath);
+
+app.set('view engine', 'hbs');
+app.set('views', viewsPath);
+hbs.registerPartials(partialsPath);
+
+// Serve static files
+app.use(express.static(publicPath));
+
+//Routers
+app.get('', (req, res) => {
+  res.cookie("user", "123123");
+  res.cookie("sky", "blue");
+  return res.render("index", {
+    title: "Welcome"
+  })
+})
+
+app.post("/logout", (req, res) => {
+  if (req.session) {
+    req.session.destroy((err) => {
+      if (err) return res.send({error: err});
+      return res.redirect("/");
+    });
+  }
+  return res.redirect("/");
+});
+
+app.get("/dashboard", isAuth, (req, res) => {
+  res.render("dashboard", {
+    title: "Secret page"
+  });
+});
+
+const loginRouter = require("../routers/login");
+app.use("/login", loginRouter);
+
+const registerRouter = require("../routers/register");
+app.use("/register", registerRouter);
 
 //server
 const port = process.env.PORT;
